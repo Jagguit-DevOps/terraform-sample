@@ -1,0 +1,69 @@
+trigger:
+- main
+
+parameters:
+  - name: action
+    displayName: "Terraform Action"
+    type: string
+    default: apply
+    values:
+      - apply
+      - destroy
+
+variables:
+- group: Terraform-VG
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: "Build"
+  jobs:
+  - job: "Build_Job"
+    steps:
+    - task: TerraformInstaller@1
+      displayName: "Terraform Installation"
+      inputs:
+        terraformVersion: 'latest'
+    - task: TerraformTaskV4@4
+      displayName: "terraform init"
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: '$(backendServiceArm)'
+        backendAzureRmResourceGroupName: '$(backendRGname)'
+        backendAzureRmStorageAccountName: '$(backendStorage)'
+        backendAzureRmContainerName: '$(backendContainer)'
+        backendAzureRmKey: '$(backendAzuremRmKey)'
+    - task: TerraformTaskV4@4
+      displayName: "terraform validate"
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+    - task: TerraformTaskV4@4
+      displayName: "terraform Plan"
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        environmentServiceNameAzureRM: 'azurermserviceconnection'
+
+- stage: Deployment
+  jobs:
+  - job: Deployment
+    steps:
+    - task: TerraformTaskV4@4
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: 'azurermserviceconnection'
+        backendAzureRmResourceGroupName: 'practice-rg'
+        backendAzureRmStorageAccountName: 'storagacnt92'
+        backendAzureRmContainerName: 'azurermcontainr'
+        backendAzureRmKey: 'tf/terraform.tfstate'
+    
+    - task: TerraformTaskV4@4
+      inputs:
+        provider: 'azurerm'
+        command: '${{ parameters.action }}'
+        commandOptions: '"--auto-approve"'
+        environmentServiceNameAzureRM: 'azurermserviceconnection'
