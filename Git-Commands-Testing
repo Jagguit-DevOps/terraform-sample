@@ -1,0 +1,11 @@
+git status
+
+git add .  ----> Adds the files to the staging area
+
+git status
+
+git commit -m "Updated the files" ---> Updated code will be stored in your local repo
+
+git status
+
+git push -u origin Testing ---> Pushes the code to your branch (Testing)
